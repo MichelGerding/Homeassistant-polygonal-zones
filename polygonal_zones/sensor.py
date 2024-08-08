@@ -9,7 +9,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from shapely.geometry import Point
 
-from .const import CONF_REGISTERED_ENTITIES, DATA_ZONES
+from .const import CONF_REGISTERED_ENTITIES, DATA_ZONES, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -88,7 +88,7 @@ class PolygonalZoneEntity(SensorEntity):
         This function registers the listener and sets the initial known state.
         If the entities state is None, it will stay in the unknown state.
         """
-        self._zones = self.hass.data[self.entry_id][DATA_ZONES]
+        self._zones = self.hass.data[DOMAIN][self._config_entry_id][DATA_ZONES]
         self._unsub = self.hass.bus.async_listen("state_changed", self._handle_state_change_builder())
 
         entity_state = self.hass.states.get(self._entity_id)

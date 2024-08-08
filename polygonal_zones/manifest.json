@@ -3,12 +3,12 @@
     "name": "Polygonal Zones",
     "codeowners": ["@MichelGerding"],
     "dependencies": [],
-    "documentation": "https://github.com/home-assistant/example-custom-config/tree/master/custom_components/hello_world/",
-    "iot_class": "local_polling",
+    "documentation": "https://github.com/MichelGerding/Homeassistant-polygonal-zones/",
+    "iot_class": "calculated",
     "requirements": [
         "shapely==2.0.5",
-        "pandas>=2.2.2",
-        "aiohttp>=3.10.1"
+        "pandas",
+        "aiohttp"
     ],
     "version": "0.1.0",
     "config_flow": true
