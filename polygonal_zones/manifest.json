@@ -1,0 +1,15 @@
+{
+    "domain": "polygonal_zones",
+    "name": "Polygonal Zones",
+    "codeowners": ["@MichelGerding"],
+    "dependencies": [],
+    "documentation": "https://github.com/home-assistant/example-custom-config/tree/master/custom_components/hello_world/",
+    "iot_class": "local_polling",
+    "requirements": [
+        "shapely==2.0.5",
+        "pandas>=2.2.2",
+        "aiohttp>=3.10.1"
+    ],
+    "version": "0.1.0",
+    "config_flow": true
+}
