@@ -1,0 +1,4 @@
+build_from:
+  amd64: michelgerding/polygonal-zones-editor:latest
+squash: false
+

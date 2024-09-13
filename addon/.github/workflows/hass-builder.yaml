@@ -1,0 +1,27 @@
+name: Hass Builder
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  hass-builder:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v4
+        with:
+          path: polygonal-zones-editor
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Publish
+        uses: home-assistant/builder@master
+        with:
+          args: |
+            --all \
+            --target polygonal-zones-editor \
+            --docker-hub polygonal-zones-editor \

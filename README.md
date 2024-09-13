@@ -4,7 +4,6 @@ It gives you the ability to provide a location for a GeoJSON file that contains 
 The integration will create a sensor for each device you want to track and provide you the zone it is currently in.
 
 
-
 ## Installation
 1. Install this integration by copying the `custom_components/polygonal_zones` folder to your `custom_components`
    folder in your homeassistant configuration folder.
