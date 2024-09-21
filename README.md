@@ -30,7 +30,8 @@ don't include entities that have the same name and domain.
 
 ## GeoJSON file
 The GeoJSON file should contain a `FeatureCollection` with `Polygon` features. Each feature should have a `name` property that will be used as the zone name.
-This file can be easily created using [geojson.io](https://geojson.io/). This file can be hosted wherever you want, as long as it is accessible from the homeassistant instance.
+This file can be generated and hosted using the [polygonal_zones_editor](https://github.com/MichelGerding/Homeassistant-polygonal-zones-addon/) addon.
+this addon will generate and host the file.
 
 ### Example file
 ```json
