@@ -10,6 +10,11 @@ The integration will create a sensor for each device you want to track and provi
 2. Add the GeoJSON file to your `config/www` folder. or host it elsewhere.
 3. Cnofigure the integration in the homeassistant UI.
 
+### Install using hacs
+To install the integration using hacs you cann eiteher add the url to your custom repositories or use the button below
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=MichelGerding&repository=Homeassistant-polygonal-zones&category=integration)
+
+
 ## Configuration
 The configuration is done in the homeassistant UI.
 1. Go to Configuration -> Integrations
