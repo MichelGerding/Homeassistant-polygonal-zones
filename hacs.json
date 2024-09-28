@@ -1,4 +1,10 @@
 { 
   "name": "Polyognal Zones",
-  "country": "NL",
+  "render_readme": true,
+  "content_in_root": false,
+  "domains": ["polygonal_zones"],
+  "development" : {
+    "branch": "dev",
+    "enabled": true
+  }
 }
