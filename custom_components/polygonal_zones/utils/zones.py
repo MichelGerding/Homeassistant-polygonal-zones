@@ -62,7 +62,7 @@ def get_locations_zone(
         distance = gps_point.distance(zone["geometry"])
         return {
             "name": zone["name"],
-            "distance": distance,
+            "distance": distance * 111320,
         }
 
     # get the distances to the potential zones
@@ -75,5 +75,5 @@ def get_locations_zone(
     distance = distances[closest_zone_index]
     return {
         "name": zone["name"],
-        "distance": distance,
+        "distance": distance * 111320,
     }
