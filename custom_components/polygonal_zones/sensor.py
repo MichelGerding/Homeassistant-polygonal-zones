@@ -1,25 +1,24 @@
 """ Sensor for the polygonal_zones integration. """
 
 import logging
-from typing import Optional
 
 import pandas as pd
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from shapely.geometry import Point
 
 from .const import CONF_REGISTERED_ENTITIES, DATA_ZONES, DOMAIN
+from .utils import get_locations_zone, event_should_trigger
 
 _LOGGER = logging.getLogger(__name__)
 
 
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities) -> None:
+async def async_setup_entry(_hass: HomeAssistant, entry: ConfigEntry, async_add_entities) -> None:
     """
     Set up the entities from a config entry.
 
     Args:
-        hass: The Home Assistant instance.
+        _hass: The Home Assistant instance.
         entry: The config entry.
         async_add_entities: A callable to add the entities.
 
@@ -27,43 +26,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
         None
     """
     # create the entities
-    entities = []
-    for entity_id in entry.data.get(CONF_REGISTERED_ENTITIES, []):
-        entities.append(PolygonalZoneEntity(entity_id, entry.entry_id))
+    entities = [
+        PolygonalZoneEntity(entity_id, entry.entry_id)
+        for entity_id in entry.data.get(CONF_REGISTERED_ENTITIES, [])
+    ]
 
     async_add_entities(entities, True)
-
-
-def get_locations_zone(lat: float, lon: float, acc: float, zones: pd.DataFrame) -> Optional[pd.Series]:
-    """
-    Determine the closest zone to the given GPS coordinates.
-
-    Args:
-        lat: The latitude of the GPS coordinates.
-        lon: The longitude of the GPS coordinates.
-        acc: The accuracy of the GPS coordinates in meters.
-        zones: A pandas DataFrame containing the zones, with a "geometry" column
-            of Polygon objects.
-
-    Returns:
-        The closest zone if found, otherwise `None`.
-    """
-    gps_point = Point(lon, lat)
-    buffer = gps_point.buffer(acc / 111320)
-
-    # Get the zones we might be in
-    posible_zones = zones[buffer.intersects(zones["geometry"])]
-
-    # if we have 1 or 0 possible zones we will return.
-    if posible_zones.empty:
-        return None
-    if len(posible_zones) == 1:
-        return posible_zones.iloc[0]
-
-    # get the distances to the potential zones
-    distances = posible_zones["geometry"].apply(lambda zone, point=gps_point: point.distance(zone))
-    closest_zone_index = distances.idxmin()
-    return zones.loc[closest_zone_index]
 
 
 class PolygonalZoneEntity(SensorEntity):
@@ -107,10 +75,7 @@ class PolygonalZoneEntity(SensorEntity):
 
     def update_location(self, latitude, longitude, gps_accuracy):
         zone = get_locations_zone(latitude, longitude, gps_accuracy, self._zones)
-        if zone is None:
-            zone = {"name": "away"}
-
-        self._state = zone["name"]
+        self._state = "away" if zone is None else zone["name"]
 
     def _handle_state_change_builder(self):
         """Create a callback for the state updates.
@@ -119,16 +84,10 @@ class PolygonalZoneEntity(SensorEntity):
         """
 
         async def func(event):
-            # check if we it is the entity we should listen to.
-            if event.data["entity_id"] != self._entity_id:
-                return
-            # extract the states from the event
-            old_state = event.data["old_state"].attributes
-            new_state = event.data["new_state"].attributes
+            # check if it is the entity we should listen to.
+            if event_should_trigger(event, self._entity_id):
+                new_state = event.data["new_state"].attributes
 
-            # check if one or more of the important data has been updated
-            if old_state["latitude"] != new_state["latitude"] or old_state["longitude"] != new_state["longitude"] or \
-                    old_state["gps_accuracy"] != new_state["gps_accuracy"]:
                 # Extract necessary information
                 latitude = new_state["latitude"]
                 longitude = new_state["longitude"]
