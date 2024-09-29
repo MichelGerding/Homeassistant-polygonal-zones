@@ -31,7 +31,9 @@ async def get_zones(uri: str) -> pd.DataFrame:
     return pd.DataFrame(zones)
 
 
-def get_locations_zone(lat: float, lon: float, acc: float, zones: pd.DataFrame) -> Optional[pd.Series]:
+def get_locations_zone(
+    lat: float, lon: float, acc: float, zones: pd.DataFrame
+) -> Optional[dict]:
     """
     Determine the closest zone to the given GPS coordinates.
 
@@ -54,10 +56,24 @@ def get_locations_zone(lat: float, lon: float, acc: float, zones: pd.DataFrame) 
     # if we have 1 or 0 possible zones we will return.
     if posible_zones.empty:
         return None
+
     if len(posible_zones) == 1:
-        return posible_zones.iloc[0]
+        zone = posible_zones.iloc[0]
+        distance = gps_point.distance(zone["geometry"])
+        return {
+            "name": zone["name"],
+            "distance": distance,
+        }
 
     # get the distances to the potential zones
-    distances = posible_zones["geometry"].apply(lambda zone, point=gps_point: point.distance(zone))
+    distances = posible_zones["geometry"].apply(
+        lambda z, point=gps_point: point.distance(z)
+    )
     closest_zone_index = distances.idxmin()
-    return zones.loc[closest_zone_index]
+
+    zone = zones.loc[closest_zone_index]
+    distance = distances[closest_zone_index]
+    return {
+        "name": zone["name"],
+        "distance": distance,
+    }

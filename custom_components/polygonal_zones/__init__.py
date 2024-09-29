@@ -3,8 +3,7 @@
 import logging
 
 from .utils import get_zones
-from .const import (CONF_REGISTERED_ENTITIES, CONF_ZONES_URL, DATA_ZONES,
-                    DATA_ZONES_URL, DOMAIN, PLATFORM)
+from .const import CONF_ZONES_URL, DATA_ZONES, DATA_ZONES_URL, DOMAIN, PLATFORM
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -21,7 +20,7 @@ async def async_setup_entry(hass, entry):
     hass.data[DOMAIN][entry.entry_id] = {
         DATA_ZONES_URL: zones_url,
         DATA_ZONES: await get_zones(zones_url),
-        'entry': entry
+        "entry": entry,
     }
 
     await hass.config_entries.async_forward_entry_setups(entry, [PLATFORM])

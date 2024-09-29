@@ -27,7 +27,7 @@ def event_should_trigger(event, entity_id) -> bool:
 
     # check if one or more of the important data has been updated
     return (
-            old_state["latitude"] != new_state["latitude"] or
-            old_state["longitude"] != new_state["longitude"] or
-            old_state["gps_accuracy"] != new_state["gps_accuracy"]
+        old_state["latitude"] != new_state["latitude"]
+        or old_state["longitude"] != new_state["longitude"]
+        or old_state["gps_accuracy"] != new_state["gps_accuracy"]
     )

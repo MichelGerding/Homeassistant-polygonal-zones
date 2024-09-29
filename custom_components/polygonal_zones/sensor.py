@@ -1,6 +1,7 @@
-""" Sensor for the polygonal_zones integration. """
+"""Sensor for the polygonal_zones integration."""
 
 import logging
+from datetime import datetime
 
 import pandas as pd
 from homeassistant.components.sensor import SensorEntity
@@ -13,7 +14,9 @@ from .utils import get_locations_zone, event_should_trigger
 _LOGGER = logging.getLogger(__name__)
 
 
-async def async_setup_entry(_hass: HomeAssistant, entry: ConfigEntry, async_add_entities) -> None:
+async def async_setup_entry(
+    _hass: HomeAssistant, entry: ConfigEntry, async_add_entities
+) -> None:
     """
     Set up the entities from a config entry.
 
@@ -41,6 +44,7 @@ class PolygonalZoneEntity(SensorEntity):
     _unsub: callable = None
 
     _state: str = "unknown"
+    _attributes: dict = {}
 
     def __init__(self, entity_id, config_entry_id):
         """Initialize the entity."""
@@ -57,7 +61,9 @@ class PolygonalZoneEntity(SensorEntity):
         If the entities state is None, it will stay in the unknown state.
         """
         self._zones = self.hass.data[DOMAIN][self._config_entry_id][DATA_ZONES]
-        self._unsub = self.hass.bus.async_listen("state_changed", self._handle_state_change_builder())
+        self._unsub = self.hass.bus.async_listen(
+            "state_changed", self._handle_state_change_builder()
+        )
 
         entity_state = self.hass.states.get(self._entity_id)
         if entity_state is None:
@@ -75,7 +81,15 @@ class PolygonalZoneEntity(SensorEntity):
 
     def update_location(self, latitude, longitude, gps_accuracy):
         zone = get_locations_zone(latitude, longitude, gps_accuracy, self._zones)
-        self._state = "away" if zone is None else zone["name"]
+        self._attributes = {
+            "source_entity": self._entity_id,
+            "distance": -1 if zone is None else zone["distance"],
+            "latitude": latitude,
+            "longitude": longitude,
+            "accuracy": gps_accuracy,
+            "last_updated": datetime.now().isoformat(),
+        }
+        self._state = zone["name"] if zone is not None else "away"
 
     def _handle_state_change_builder(self):
         """Create a callback for the state updates.
@@ -111,6 +125,11 @@ class PolygonalZoneEntity(SensorEntity):
     def state(self):
         """Return the state of the entity."""
         return self._state
+
+    @property
+    def extra_state_attributes(self):
+        """Return the state attributes of the entity."""
+        return self._attributes
 
     @property
     def should_poll(self):
