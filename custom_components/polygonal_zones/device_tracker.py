@@ -1,13 +1,13 @@
 """Sensor for the polygonal_zones integration."""
 
 import logging
+import pandas as pd
 from datetime import datetime
 
-import pandas as pd
-from homeassistant.components.sensor import SensorEntity
+from homeassistant.components.device_tracker import SourceType, TrackerEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from .const import CONF_REGISTERED_ENTITIES, DATA_ZONES, DOMAIN
 from .utils import get_locations_zone, event_should_trigger
 
@@ -37,14 +37,15 @@ async def async_setup_entry(
     async_add_entities(entities, True)
 
 
-class PolygonalZoneEntity(SensorEntity):
+class PolygonalZoneEntity(TrackerEntity):
     """Representation of a polygonal zone entity."""
 
     _zones: pd.DataFrame = pd.DataFrame([])
     _unsub: callable = None
 
-    _state: str = "unknown"
-    _attributes: dict = {}
+    _attr_latitude: float = None
+    _attr_longitude: float = None
+    _attr_gps_accuracy: float = None
 
     def __init__(self, entity_id, config_entry_id):
         """Initialize the entity."""
@@ -53,6 +54,9 @@ class PolygonalZoneEntity(SensorEntity):
 
         self._attr_name = f"Polygonal Zone Tracker: {entity_id}"
         self._attr_unique_id = f"polygonal_zone_{entity_id.replace(".", "_")}"
+        self._attr_source_type = SourceType.GPS
+
+
 
     async def async_added_to_hass(self):
         """Run when the entity is added to homeassistant.
@@ -66,30 +70,42 @@ class PolygonalZoneEntity(SensorEntity):
         )
 
         entity_state = self.hass.states.get(self._entity_id)
-        if entity_state is None:
-            return
+        if entity_state is not None:
+            for key in ["latitude", "longitude", "gps_accuracy"]:
+                if key not in entity_state.attributes:
+                    _LOGGER.error(
+                        "Entity %s does not have the required attributes to be a location entity",
+                        self._entity_id,
+                    )
+                    return
 
-        self.update_location(
-            entity_state.attributes["latitude"],
-            entity_state.attributes["longitude"],
-            entity_state.attributes["gps_accuracy"],
-        )
+            self._attr_source_type = entity_state.attributes.get("source_type")
+            self.update_location(
+                entity_state.attributes["latitude"],
+                entity_state.attributes["longitude"],
+                entity_state.attributes["gps_accuracy"],
+            )
 
     async def async_will_remove_from_hass(self):
         """Handle cleanup when the entity is removed."""
-        self._unsub()
+        if self._unsub:
+            self._unsub()
 
     def update_location(self, latitude, longitude, gps_accuracy):
+        # self._attr_latitude = latitude
+        # self._attr_longitude = longitude
+        # self._attr_gps_accuracy = gps_accuracy
+
         zone = get_locations_zone(latitude, longitude, gps_accuracy, self._zones)
-        self._attributes = {
+        _LOGGER.info("Zone: %s", zone)
+        self._attr_location_name = zone["name"] if zone is not None else "away"
+        self._attr_extra_state_attributes = {
             "source_entity": self._entity_id,
-            "distance": -1 if zone is None else zone["distance"],
+            "last_updated": datetime.now().isoformat(),
             "latitude": latitude,
             "longitude": longitude,
-            "accuracy": gps_accuracy,
-            "last_updated": datetime.now().isoformat(),
+            "gps_accuracy": gps_accuracy,
         }
-        self._state = zone["name"] if zone is not None else "away"
 
     def _handle_state_change_builder(self):
         """Create a callback for the state updates.
@@ -99,19 +115,28 @@ class PolygonalZoneEntity(SensorEntity):
 
         async def func(event):
             # check if it is the entity we should listen to.
+            _LOGGER.debug("Event: %s", event)
             if event_should_trigger(event, self._entity_id):
                 new_state = event.data["new_state"].attributes
+                self.update_location(
+                    new_state["latitude"],
+                    new_state["longitude"],
+                    new_state["gps_accuracy"]
+                )
 
-                # Extract necessary information
-                latitude = new_state["latitude"]
-                longitude = new_state["longitude"]
-                gps_accuracy = new_state["gps_accuracy"]
-
-                # Determine the current zone
-                self.update_location(latitude, longitude, gps_accuracy)
                 self.async_write_ha_state()
 
         return func
+
+
+    @property
+    def source_type(self) -> SourceType | str:
+        return self._attr_source_type
+
+    @property
+    def location_name(self):
+        return self._attr_location_name
+
 
     @property
     def device_info(self):
@@ -120,16 +145,6 @@ class PolygonalZoneEntity(SensorEntity):
             "name": "Polygonal Zones",
             "manufacturer": "Michel Gerding",
         }
-
-    @property
-    def state(self):
-        """Return the state of the entity."""
-        return self._state
-
-    @property
-    def extra_state_attributes(self):
-        """Return the state attributes of the entity."""
-        return self._attributes
 
     @property
     def should_poll(self):

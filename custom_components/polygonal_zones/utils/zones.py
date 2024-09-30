@@ -1,11 +1,32 @@
 import json
-from typing import Optional
-
+import numpy as np
 import pandas as pd
 from shapely.geometry import shape, Point
+from shapely.geometry.polygon import Polygon
+from typing import Optional
 
+from script.lint_and_test import printc
 from .general import load_data
 
+
+def get_distance(polygon: Polygon, point: Point) -> float:
+    """
+    Get the distance between a point and a polygon in meters.
+
+    Args:
+        polygon: The polygon.
+        point: The point.
+
+    Returns:
+        The distance between the point and the polygon in meters.
+    """
+    polygon_centroid = polygon.centroid
+    # get the haversine distance between the point and the polygon centroid
+    distance = np.linalg.norm(
+        [polygon_centroid.x - point.x, polygon_centroid.y - point.y]
+    )
+
+    return distance * 111320
 
 async def get_zones(uri: str) -> pd.DataFrame:
     """
@@ -53,27 +74,30 @@ def get_locations_zone(
     # Get the zones we might be in
     posible_zones = zones[buffer.intersects(zones["geometry"])]
 
+
     # if we have 1 or 0 possible zones we will return.
     if posible_zones.empty:
         return None
 
     if len(posible_zones) == 1:
         zone = posible_zones.iloc[0]
-        distance = gps_point.distance(zone["geometry"])
+        distance = get_distance(zone["geometry"], gps_point)
         return {
             "name": zone["name"],
             "distance": distance * 111320,
         }
 
-    # get the distances to the potential zones
-    distances = posible_zones["geometry"].apply(
-        lambda z, point=gps_point: point.distance(z)
-    )
+    # get the distances to the potential zones using the uclidean distance to the cetnroid
+    distances = posible_zones["geometry"].apply(lambda x: get_distance(x, gps_point))
+
     closest_zone_index = distances.idxmin()
 
+    # get the amount of zones that have the same distance
+    closest_zones = distances[distances == distances[closest_zone_index]]
+    print(closest_zones)
     zone = zones.loc[closest_zone_index]
     distance = distances[closest_zone_index]
     return {
         "name": zone["name"],
-        "distance": distance * 111320,
+        "distance": distance,
     }

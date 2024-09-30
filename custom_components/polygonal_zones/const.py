@@ -7,7 +7,7 @@ DATA_ZONES_URL = f"{DOMAIN}_zones_url"
 
 CONF_REGISTERED_ENTITIES = "registered_entities"
 CONF_ZONES_URL = "zones_url"
-PLATFORM = "sensor"
+PLATFORM = "device_tracker"
 
 CONF_SCHEMA = vol.Schema(
     {
