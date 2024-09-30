@@ -5,7 +5,6 @@ from shapely.geometry import shape, Point
 from shapely.geometry.polygon import Polygon
 from typing import Optional
 
-from script.lint_and_test import printc
 from .general import load_data
 
 
@@ -94,7 +93,6 @@ def get_locations_zone(
 
     # get the amount of zones that have the same distance
     closest_zones = distances[distances == distances[closest_zone_index]]
-    print(closest_zones)
     zone = zones.loc[closest_zone_index]
     distance = distances[closest_zone_index]
     return {
