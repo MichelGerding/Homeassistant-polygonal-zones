@@ -64,7 +64,7 @@ might be added in the future.
 
 ## TODO
 - [ ] Add tests
-- [ ] Add ability to have entities with the same name
+- [x] Add ability to have entities with the same name
 - [x] Add addon to create GeoJSON file/ create zones in the UI
 - [x] Add support for local GeoJSON files
 - [x] add support for multiple GeoJSON files

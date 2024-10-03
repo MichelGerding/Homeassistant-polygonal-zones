@@ -3,6 +3,7 @@ import aiohttp
 from homeassistant.core import HomeAssistant
 
 
+
 async def load_data(uri: str, hass: HomeAssistant) -> str:
     if uri.startswith("http") or uri.startswith("https"):
         async with aiohttp.ClientSession() as session:
@@ -14,7 +15,6 @@ async def load_data(uri: str, hass: HomeAssistant) -> str:
         data = file.read()
         file.close()
         return data
-
 
 
 def event_should_trigger(event, entity_id) -> bool:
@@ -37,7 +37,7 @@ def event_should_trigger(event, entity_id) -> bool:
 
     # check if one or more of the important data has been updated
     return (
-        old_state["latitude"] != new_state["latitude"]
-        or old_state["longitude"] != new_state["longitude"]
-        or old_state["gps_accuracy"] != new_state["gps_accuracy"]
+            old_state["latitude"] != new_state["latitude"]
+            or old_state["longitude"] != new_state["longitude"]
+            or old_state["gps_accuracy"] != new_state["gps_accuracy"]
     )

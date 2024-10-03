@@ -1,8 +1,9 @@
 from urllib.parse import urlparse
-from ..const import CONF_ZONES_URL
 
 import aiohttp
-import os
+
+from ..const import CONF_ZONES_URL
+
 
 async def validate_url(url: str) -> bool:
     try:

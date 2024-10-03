@@ -1,0 +1,26 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Polygonal Zones Configuration",
+        "description": "Select GeoJSON file location",
+        "data": {
+          "zone_urls": "URLs of GeoJSON files",
+          "prioritize_zone_files": "Prioritize order of zone files",
+          "registered_entities": "Entities",
+          "ensure_unique_entities": "Ensure entity ids are unique"
+        },
+        "data_description": {
+          "zone_urls": "Enter the URLs of the GeoJSON files that contain the zones you want to track. this supports both websites and files in the /config directory",
+          "prioritize_zone_files": "If you want to prioritize the order of the zone files, enable this option. this means that if a tracker is in multiple zones it will only consider those with the lowest priority",
+          "registered_entities": "Select the entities that you want to track in the zones. You can only track an entity once",
+        }
+      }
+    },
+    "error": {
+      "invalid_url": "Invalid URL",
+      "unreachable_url": "The url can not be reached",
+      "no_entities": "No entities selected"
+    }
+  }
+}

@@ -10,7 +10,6 @@ from .utils import validate_data
 
 _LOGGER = logging.getLogger(__name__)
 
-import os
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     VERSION = 1

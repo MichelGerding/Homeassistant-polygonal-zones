@@ -5,10 +5,11 @@ from __future__ import annotations
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
+
 from .const import CONF_ZONES_URL, DATA_ZONES, DATA_ZONES_URL, DOMAIN, PLATFORM
-from .utils import get_zones
 
 PLATFORMS: list[Platform] = [Platform.DEVICE_TRACKER]
+
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up polygonal_zones from a config entry."""
