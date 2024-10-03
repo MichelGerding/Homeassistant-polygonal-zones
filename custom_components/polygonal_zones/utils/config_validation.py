@@ -1,7 +1,8 @@
 from urllib.parse import urlparse
+from ..const import CONF_ZONES_URL
 
 import aiohttp
-
+import os
 
 async def validate_url(url: str) -> bool:
     try:
@@ -28,16 +29,18 @@ async def validate_data(user_input) -> dict:
     errors = {}
 
     # check if the URL is valid
-    parsed = urlparse(user_input["zones_url"])
-    if not parsed.scheme or not parsed.netloc:
-        errors["zones_url"] = "invalid_url"
-    else:
-        # confirm that it is reachable
-        if not await validate_url(user_input["zones_url"]):
-            errors["zones_url"] = "unreachable_url"
+    for uri in user_input[CONF_ZONES_URL]:
+        if uri.startswith("http://") or uri.startswith("https://"):
+            parsed = urlparse(uri)
+            if not parsed.scheme or not parsed.netloc:
+                errors["zones_url"] = "invalid_url"
+            else:
+                # confirm that it is reachable
+                if not await validate_url(uri):
+                    errors["zones_url"] = "unreachable_url"
 
-    # confirm that the entities are valid
-    if not user_input["registered_entities"]:
-        errors["registered_entities"] = "no_entities"
+            # confirm that the entities are valid
+            if not user_input["registered_entities"]:
+                errors["registered_entities"] = "no_entities"
 
     return errors

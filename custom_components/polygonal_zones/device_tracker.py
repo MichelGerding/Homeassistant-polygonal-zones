@@ -1,21 +1,22 @@
 """Sensor for the polygonal_zones integration."""
 
 import logging
-from datetime import datetime
-
 import pandas as pd
+from datetime import datetime
+from os import path
+
 from homeassistant.components.device_tracker import SourceType, TrackerEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-
-from .const import CONF_REGISTERED_ENTITIES, DATA_ZONES, DOMAIN
+from homeassistant.helpers import entity_registry as er
+from .const import CONF_REGISTERED_ENTITIES, CONF_ZONES_URL, DATA_ZONES, DOMAIN
 from .utils import get_locations_zone, event_should_trigger
+from .utils.zones import get_zones
 
 _LOGGER = logging.getLogger(__name__)
 
-
 async def async_setup_entry(
-        _hass: HomeAssistant, entry: ConfigEntry, async_add_entities
+        hass: HomeAssistant, entry: ConfigEntry, async_add_entities
 ) -> None:
     """
     Set up the entities from a config entry.
@@ -28,11 +29,14 @@ async def async_setup_entry(
     Returns:
         None
     """
+    zone_uris = entry.data.get(CONF_ZONES_URL)
+
     # create the entities
-    entities = [
-        PolygonalZoneEntity(entity_id, entry.entry_id)
-        for entity_id in entry.data.get(CONF_REGISTERED_ENTITIES, [])
-    ]
+    entities = []
+    for entity_id in entry.data.get(CONF_REGISTERED_ENTITIES, []):
+        base_id = f"polygonal_zone_{entity_id.replace('.', '_')}"
+        entity = PolygonalZoneEntity(entity_id, entry.entry_id, zone_uris, base_id)
+        entities.append(entity)
 
     async_add_entities(entities, True)
 
@@ -48,13 +52,15 @@ class PolygonalZoneEntity(TrackerEntity):
     _attr_longitude: float = None
     _attr_gps_accuracy: float = None
 
-    def __init__(self, entity_id, config_entry_id):
+    def __init__(self, tracked_entity_id, config_entry_id, zone_urls, unique_id):
         """Initialize the entity."""
         self._config_entry_id = config_entry_id
-        self._entity_id = entity_id
+        self._entity_id = tracked_entity_id
+        self._zones_urls = zone_urls
 
-        self._attr_name = f"Polygonal Zone Tracker: {entity_id}"
-        self._attr_unique_id = f"polygonal_zone_{entity_id.replace(".", "_")}"
+        self._attr_name = f"Polygonal Zone Tracker: {tracked_entity_id}"
+
+        self._attr_unique_id = unique_id
         self._attr_source_type = SourceType.GPS
 
     async def async_added_to_hass(self):
@@ -63,7 +69,7 @@ class PolygonalZoneEntity(TrackerEntity):
         This function registers the listener and sets the initial known state.
         If the entities state is None, it will stay in the unknown state.
         """
-        self._zones = self.hass.data[DOMAIN][self._config_entry_id][DATA_ZONES]
+        self._zones = await get_zones(self._zones_urls, self.hass)
         self._unsub = self.hass.bus.async_listen(
             "state_changed", self._handle_state_change_builder()
         )

@@ -6,6 +6,7 @@ import pandas as pd
 from shapely.geometry import shape, Point
 from shapely.geometry.polygon import Polygon
 
+from homeassistant.core import HomeAssistant
 from .general import load_data
 
 
@@ -68,26 +69,29 @@ def get_distance_to_centroid(polygon: Polygon, point: Point) -> float:
     distance = haversine_distances(point, polygon_centroid)
     return distance
 
-async def get_zones(uri: str) -> pd.DataFrame:
+async def get_zones(uris: str, hass: HomeAssistant) -> pd.DataFrame:
     """
     Get the zones from the geojson file.
 
     Args:
-        uri: The URL to the geojson file.
+        uris: The URL to the geojson file.
 
     Returns:
         A pandas DataFrame containing the zones.
     """
-    data = await load_data(uri)
-    data = json.loads(data)
-
-    # parse the geojson file into a pandas DataFrame.
-    # We only want the relevant information.
     zones = []
-    for i, feature in enumerate(data["features"]):
-        geometry = shape(feature["geometry"])
-        properties = feature["properties"]
-        zones.append({"geometry": geometry, **properties})
+
+    for uri in uris:
+        data = await load_data(uri, hass)
+        data = json.loads(data)
+
+        # parse the geojson file into a pandas DataFrame.
+        # We only want the relevant information.
+        for i, feature in enumerate(data["features"]):
+            geometry = shape(feature["geometry"])
+            properties = feature["properties"]
+            zones.append({"geometry": geometry, **properties})
+
 
     return pd.DataFrame(zones)
 

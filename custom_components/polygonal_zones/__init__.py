@@ -15,15 +15,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if entry.entry_id in hass.data:
         return True
 
-    # ensure hass.data[DOMAIN][entry.entry_id] exists
-    zones_url = entry.data.get(CONF_ZONES_URL)
-    hass.data.setdefault(DOMAIN, {})
-    hass.data[DOMAIN][entry.entry_id] = {
-        DATA_ZONES_URL: zones_url,
-        DATA_ZONES: await get_zones(zones_url),
-        "entry": entry,
-    }
-
     await hass.config_entries.async_forward_entry_setups(entry, [PLATFORM])
     return True
 

@@ -10,6 +10,7 @@ from .utils import validate_data
 
 _LOGGER = logging.getLogger(__name__)
 
+import os
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     VERSION = 1
@@ -19,14 +20,12 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             # validate the input data. If it is valid, create the entry
             errors = await validate_data(user_input)
+
             if not errors:
                 return self.async_create_entry(title="polygonal_zones", data=user_input)
 
         return self.async_show_form(
             step_id="user",
             data_schema=CONF_SCHEMA,
-            description_placeholders={
-                "zones_url_label": "Enter the URL to your zones file"
-            },
             errors=errors,
         )

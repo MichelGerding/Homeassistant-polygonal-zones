@@ -1,10 +1,20 @@
 import aiohttp
 
+from homeassistant.core import HomeAssistant
 
-async def load_data(uri: str) -> str:
-    async with aiohttp.ClientSession() as session:
-        async with session.get(uri) as response:
-            return await response.text()
+
+async def load_data(uri: str, hass: HomeAssistant) -> str:
+    if uri.startswith("http") or uri.startswith("https"):
+        async with aiohttp.ClientSession() as session:
+            async with session.get(uri) as response:
+                return await response.text()
+    else:
+        config_dir = hass.config.config_dir
+        file = await hass.async_add_executor_job(open, f"{config_dir}/{uri}", "r")
+        data = file.read()
+        file.close()
+        return data
+
 
 
 def event_should_trigger(event, entity_id) -> bool:
