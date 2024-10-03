@@ -1,13 +1,13 @@
 """Sensor for the polygonal_zones integration."""
 
 import logging
-import pandas as pd
 from datetime import datetime
 
+import pandas as pd
 from homeassistant.components.device_tracker import SourceType, TrackerEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+
 from .const import CONF_REGISTERED_ENTITIES, DATA_ZONES, DOMAIN
 from .utils import get_locations_zone, event_should_trigger
 
@@ -15,7 +15,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(
-    _hass: HomeAssistant, entry: ConfigEntry, async_add_entities
+        _hass: HomeAssistant, entry: ConfigEntry, async_add_entities
 ) -> None:
     """
     Set up the entities from a config entry.
@@ -55,8 +55,6 @@ class PolygonalZoneEntity(TrackerEntity):
         self._attr_name = f"Polygonal Zone Tracker: {entity_id}"
         self._attr_unique_id = f"polygonal_zone_{entity_id.replace(".", "_")}"
         self._attr_source_type = SourceType.GPS
-
-
 
     async def async_added_to_hass(self):
         """Run when the entity is added to homeassistant.
@@ -128,7 +126,6 @@ class PolygonalZoneEntity(TrackerEntity):
 
         return func
 
-
     @property
     def source_type(self) -> SourceType | str:
         return self._attr_source_type
@@ -136,7 +133,6 @@ class PolygonalZoneEntity(TrackerEntity):
     @property
     def location_name(self):
         return self._attr_location_name
-
 
     @property
     def device_info(self):
