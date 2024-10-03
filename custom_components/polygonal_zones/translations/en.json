@@ -13,7 +13,7 @@
         "data_description": {
           "zone_urls": "Enter the URLs of the GeoJSON files that contain the zones you want to track. this supports both websites and files in the /config directory",
           "prioritize_zone_files": "If you want to prioritize the order of the zone files, enable this option. this means that if a tracker is in multiple zones it will only consider those with the lowest priority",
-          "registered_entities": "Select the entities that you want to track in the zones. You can only track an entity once",
+          "registered_entities": "Select the entities that you want to track in the zones. You can only track an entity once"
         }
       }
     },
