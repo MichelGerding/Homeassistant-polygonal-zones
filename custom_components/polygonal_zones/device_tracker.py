@@ -43,6 +43,7 @@ class PolygonalZoneEntity(TrackerEntity):
     _zones: pd.DataFrame = pd.DataFrame([])
     _unsub: callable = None
 
+    _attr_location_name: str = None
     _attr_latitude: float = None
     _attr_longitude: float = None
     _attr_gps_accuracy: float = None
@@ -99,7 +100,6 @@ class PolygonalZoneEntity(TrackerEntity):
         self._attr_location_name = zone["name"] if zone is not None else "away"
         self._attr_extra_state_attributes = {
             "source_entity": self._entity_id,
-            "last_updated": datetime.now().isoformat(),
             "latitude": latitude,
             "longitude": longitude,
             "gps_accuracy": gps_accuracy,
