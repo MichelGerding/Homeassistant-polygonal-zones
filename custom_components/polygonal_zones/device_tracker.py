@@ -72,6 +72,7 @@ class PolygonalZoneEntity(TrackerEntity):
         self._zones_urls = zone_urls
         self._prioritize_zone_files = prioritized_zone_files
 
+        self._attr_unique_id = unique_id
         self.entity_id = unique_id
         self._attr_source_type = SourceType.GPS
 
