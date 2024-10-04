@@ -3,9 +3,16 @@
 import logging
 
 import pandas as pd
+from shapely import Polygon
 from homeassistant.components.device_tracker import SourceType, TrackerEntity
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+from homeassistant.core import (
+    HomeAssistant,
+    ServiceResponse,
+    SupportsResponse,
+    ServiceCall,
+)
+from homeassistant.helpers import entity_platform
 from homeassistant.helpers.entity import generate_entity_id
 
 from .const import (
@@ -20,8 +27,24 @@ from .utils.zones import get_zones
 _LOGGER = logging.getLogger(__name__)
 
 
+def geometry_to_coords(polygon: Polygon) -> list[tuple[float, float]]:
+    return list(polygon.exterior.coords)
+
+
+async def custom_async_reload_zones(
+        entity: "PolygonalZoneEntity", call: ServiceCall
+) -> None:
+    """Reload the zones."""
+    await entity.async_reload_zones()
+
+    if call.return_response:
+        zones_clone = entity._zones.copy()
+        zones_clone["geometry"] = zones_clone["geometry"].apply(geometry_to_coords)
+        return zones_clone[["name", "priority", "geometry"]].to_dict(orient="records")
+
+
 async def async_setup_entry(
-    hass: HomeAssistant, entry: ConfigEntry, async_add_entities
+        hass: HomeAssistant, entry: ConfigEntry, async_add_entities
 ) -> None:
     """
     Set up the entities from a config entry.
@@ -41,6 +64,7 @@ async def async_setup_entry(
 
     # create the entities
     entities = []
+
     for entity_id in entry.data.get(CONF_REGISTERED_ENTITIES, []):
         entitiy_name = entity_id.split(".")[-1]
         base_id = generate_entity_id(
@@ -56,8 +80,16 @@ async def async_setup_entry(
         )
         entities.append(entity)
 
+    platform = entity_platform.async_get_current_platform()
+    platform.async_register_entity_service(
+        "reload_zones",
+        {},
+        custom_async_reload_zones,
+        supports_response=SupportsResponse.OPTIONAL,
+    )
+
     async_add_entities(entities, True)
-    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = entities
+    hass.data[DOMAIN][entry.entry_id] = entities
 
 
 class PolygonalZoneEntity(TrackerEntity):
@@ -72,12 +104,12 @@ class PolygonalZoneEntity(TrackerEntity):
     _attr_gps_accuracy: float = None
 
     def __init__(
-        self,
-        tracked_entity_id,
-        config_entry_id,
-        zone_urls,
-        unique_id,
-        prioritized_zone_files,
+            self,
+            tracked_entity_id,
+            config_entry_id,
+            zone_urls,
+            unique_id,
+            prioritized_zone_files,
     ):
         """Initialize the entity."""
         self._config_entry_id = config_entry_id
@@ -150,8 +182,8 @@ class PolygonalZoneEntity(TrackerEntity):
     async def _update_state(self):
         entity_state = self.hass.states.get(self._entity_id)
         if entity_state is not None and all(
-            key in entity_state.attributes
-            for key in ["latitude", "longitude", "gps_accuracy"]
+                key in entity_state.attributes
+                for key in ["latitude", "longitude", "gps_accuracy"]
         ):
             self.update_location(
                 entity_state.attributes["latitude"],
@@ -160,6 +192,14 @@ class PolygonalZoneEntity(TrackerEntity):
             )
 
             self.async_write_ha_state()
+
+    # SERVICE CALLS
+    async def async_reload_zones(self) -> ServiceResponse:
+        """Reload the zones."""
+        self._zones = await get_zones(
+            self._zones_urls, self.hass, self._prioritize_zone_files
+        )
+        await self._update_state()
 
     @property
     def source_type(self) -> SourceType | str:

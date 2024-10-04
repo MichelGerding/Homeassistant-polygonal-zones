@@ -31,6 +31,9 @@ def event_should_trigger(event, entity_id) -> bool:
     if event.data["entity_id"] != entity_id:
         return False
 
+    if event.data["new_state"] is None or event.data["old_state"] is None:
+        return False
+
     old_state = event.data["old_state"].attributes
     new_state = event.data["new_state"].attributes
 

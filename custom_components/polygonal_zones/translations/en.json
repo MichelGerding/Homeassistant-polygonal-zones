@@ -38,5 +38,11 @@
         }
       }
     }
+  },
+  "services": {
+    "reload_zones": {
+      "description": "Reload the zones stored in the GeoJSON files. this will retrieve them form the stored location and update the entities internal cache of the zones. Once complete we will return this to the user",
+      "name": "Reload Zones"
+    }
   }
 }

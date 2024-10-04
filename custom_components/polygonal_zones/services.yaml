@@ -1,0 +1,4 @@
+reload_zones:
+  target:
+    entity:
+      integration: 'polygonal_zones'
