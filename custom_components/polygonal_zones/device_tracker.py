@@ -8,7 +8,12 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import generate_entity_id
 
-from .const import CONF_REGISTERED_ENTITIES, CONF_ZONES_URL, CONF_PRIORITIZE_ZONE_FILES
+from .const import (
+    CONF_REGISTERED_ENTITIES,
+    CONF_ZONES_URL,
+    CONF_PRIORITIZE_ZONE_FILES,
+    DOMAIN,
+)
 from .utils import get_locations_zone, event_should_trigger
 from .utils.zones import get_zones
 
@@ -16,7 +21,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(
-        hass: HomeAssistant, entry: ConfigEntry, async_add_entities
+    hass: HomeAssistant, entry: ConfigEntry, async_add_entities
 ) -> None:
     """
     Set up the entities from a config entry.
@@ -30,12 +35,17 @@ async def async_setup_entry(
         None
     """
     zone_uris = entry.data.get(CONF_ZONES_URL)
+    zone_uris = [
+        zone_uri for zone_uri in zone_uris if zone_uri is not None and zone_uri != ""
+    ]
 
     # create the entities
     entities = []
     for entity_id in entry.data.get(CONF_REGISTERED_ENTITIES, []):
-        entitiy_name = entity_id.split('.')[-1]
-        base_id = generate_entity_id("device_tracker.polygonal_zones_{}", entitiy_name, hass=hass)
+        entitiy_name = entity_id.split(".")[-1]
+        base_id = generate_entity_id(
+            "device_tracker.polygonal_zones_{}", entitiy_name, hass=hass
+        )
 
         entity = PolygonalZoneEntity(
             entity_id,
@@ -47,6 +57,7 @@ async def async_setup_entry(
         entities.append(entity)
 
     async_add_entities(entities, True)
+    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = entities
 
 
 class PolygonalZoneEntity(TrackerEntity):
@@ -60,19 +71,20 @@ class PolygonalZoneEntity(TrackerEntity):
     _attr_longitude: float = None
     _attr_gps_accuracy: float = None
 
-    def __init__(self,
-                 tracked_entity_id,
-                 config_entry_id,
-                 zone_urls,
-                 unique_id,
-                 prioritized_zone_files):
+    def __init__(
+        self,
+        tracked_entity_id,
+        config_entry_id,
+        zone_urls,
+        unique_id,
+        prioritized_zone_files,
+    ):
         """Initialize the entity."""
         self._config_entry_id = config_entry_id
         self._entity_id = tracked_entity_id
         self._zones_urls = zone_urls
         self._prioritize_zone_files = prioritized_zone_files
 
-        self._attr_unique_id = unique_id
         self.entity_id = unique_id
         self._attr_source_type = SourceType.GPS
 
@@ -82,27 +94,24 @@ class PolygonalZoneEntity(TrackerEntity):
         This function registers the listener and sets the initial known state.
         If the entities state is None, it will stay in the unknown state.
         """
-        self._zones = await get_zones(self._zones_urls, self.hass, self._prioritize_zone_files)
+        self._zones = await get_zones(
+            self._zones_urls, self.hass, self._prioritize_zone_files
+        )
         self._unsub = self.hass.bus.async_listen(
             "state_changed", self._handle_state_change_builder()
         )
 
-        entity_state = self.hass.states.get(self._entity_id)
-        if entity_state is not None:
-            for key in ["latitude", "longitude", "gps_accuracy"]:
-                if key not in entity_state.attributes:
-                    _LOGGER.error(
-                        "Entity %s does not have the required attributes to be a location entity",
-                        self._entity_id,
-                    )
-                    return
+        await self._update_state()
 
-            self._attr_source_type = entity_state.attributes.get("source_type")
-            self.update_location(
-                entity_state.attributes["latitude"],
-                entity_state.attributes["longitude"],
-                entity_state.attributes["gps_accuracy"],
-            )
+    async def async_update_config(self, config_entry: ConfigEntry):
+        self._zones_urls = config_entry.data.get(CONF_ZONES_URL)
+        self._prioritize_zone_files = config_entry.data.get(CONF_PRIORITIZE_ZONE_FILES)
+
+        self._zones = await get_zones(
+            self._zones_urls, self.hass, self._prioritize_zone_files
+        )
+
+        await self._update_state()
 
     async def async_will_remove_from_hass(self):
         """Handle cleanup when the entity is removed."""
@@ -134,16 +143,23 @@ class PolygonalZoneEntity(TrackerEntity):
             # check if it is the entity we should listen to.
             _LOGGER.debug("Event: %s", event)
             if event_should_trigger(event, self._entity_id):
-                new_state = event.data["new_state"].attributes
-                self.update_location(
-                    new_state["latitude"],
-                    new_state["longitude"],
-                    new_state["gps_accuracy"]
-                )
-
-                self.async_write_ha_state()
+                await self._update_state()
 
         return func
+
+    async def _update_state(self):
+        entity_state = self.hass.states.get(self._entity_id)
+        if entity_state is not None and all(
+            key in entity_state.attributes
+            for key in ["latitude", "longitude", "gps_accuracy"]
+        ):
+            self.update_location(
+                entity_state.attributes["latitude"],
+                entity_state.attributes["longitude"],
+                entity_state.attributes["gps_accuracy"],
+            )
+
+            self.async_write_ha_state()
 
     @property
     def source_type(self) -> SourceType | str:

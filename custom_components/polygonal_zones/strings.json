@@ -7,8 +7,7 @@
         "data": {
           "zone_urls": "URLs of GeoJSON files",
           "prioritize_zone_files": "Prioritize order of zone files",
-          "registered_entities": "Entities",
-          "ensure_unique_entities": "Ensure entity ids are unique"
+          "registered_entities": "Entities"
         },
         "data_description": {
           "zone_urls": "Enter the URLs of the GeoJSON files that contain the zones you want to track. this supports both websites and files in the /config directory",
@@ -19,8 +18,25 @@
     },
     "error": {
       "invalid_url": "Invalid URL",
-      "unreachable_url": "The url can not be reached",
-      "no_entities": "No entities selected"
+      "unreachable_url": "One or more urls cannot be reached",
+      "no_entities": "No entities selected",
+      "invalid_path": "The file could not be found"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Polygonal Zones Options",
+        "description": "Select GeoJSON file location",
+        "data": {
+          "zone_urls": "URLs of GeoJSON files",
+          "prioritize_zone_files": "Prioritize order of zone files"
+        },
+        "data_description": {
+          "zone_urls": "Enter the URLs of the GeoJSON files that contain the zones you want to track. this supports both websites and files in the /config directory",
+          "prioritize_zone_files": "If you want to prioritize the order of the zone files, enable this option. this means that if a tracker is in multiple zones it will only consider those with the lowest priority"
+        }
+      }
     }
   }
 }

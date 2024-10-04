@@ -5,8 +5,8 @@ import numpy as np
 import pandas as pd
 from shapely.geometry import shape, Point
 from shapely.geometry.polygon import Polygon
-from homeassistant.core import HomeAssistant
 
+from homeassistant.core import HomeAssistant
 from .general import load_data
 
 
@@ -21,7 +21,7 @@ def haversine_distances(point: np.array, coordinates: np.array) -> np.array:
     Returns:
         Array of distances in kilometers
     """
-    R = 6371000  # Radius of the earth in meters
+    R = 6371000 # Radius of the earth in meters
 
     lat1, lon1 = np.radians(point)
     lats2, lons2 = np.radians(coordinates).T
@@ -69,7 +69,6 @@ def get_distance_to_centroid(polygon: Polygon, point: Point) -> float:
     distance = haversine_distances(point, polygon_centroid)
     return distance
 
-
 async def get_zones(uris: str, hass: HomeAssistant, prioritize) -> pd.DataFrame:
     """
     Get the zones from the geojson file.
@@ -93,7 +92,8 @@ async def get_zones(uris: str, hass: HomeAssistant, prioritize) -> pd.DataFrame:
         for i, feature in enumerate(data["features"]):
             geometry = shape(feature["geometry"])
             properties = feature["properties"]
-            zones.append({"geometry": geometry, "priority": priority, **properties, })
+            zones.append({"geometry": geometry, "priority": priority ,**properties, })
+
 
     return pd.DataFrame(zones)
 
