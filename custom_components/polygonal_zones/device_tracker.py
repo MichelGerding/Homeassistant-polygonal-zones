@@ -118,6 +118,7 @@ class PolygonalZoneEntity(TrackerEntity):
         self._prioritize_zone_files = prioritized_zone_files
 
         self.entity_id = unique_id
+        self._attr_unique_id = unique_id
         self._attr_source_type = SourceType.GPS
 
     async def async_added_to_hass(self):
