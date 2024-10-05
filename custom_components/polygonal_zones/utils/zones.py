@@ -1,18 +1,19 @@
+"""Zone related utility functions for polygonal zones integration."""
+
 import json
-from typing import Optional
 
 import numpy as np
 import pandas as pd
-from shapely.geometry import shape, Point
+from shapely.geometry import Point, shape
 from shapely.geometry.polygon import Polygon
 
 from homeassistant.core import HomeAssistant
+
 from .general import load_data
 
 
 def haversine_distances(point: np.array, coordinates: np.array) -> np.array:
-    """
-    Calculate Haversine distances from a single point to multiple points.
+    """Calculate Haversine distances from a single point to multiple points.
 
     Args:
         point: NumPy array of shape (2,) containing [latitude, longitude] of the single point (in degrees)
@@ -20,8 +21,9 @@ def haversine_distances(point: np.array, coordinates: np.array) -> np.array:
 
     Returns:
         Array of distances in kilometers
+
     """
-    R = 6371000 # Radius of the earth in meters
+    R = 6371000  # Radius of the earth in meters
 
     lat1, lon1 = np.radians(point)
     lats2, lons2 = np.radians(coordinates).T
@@ -36,15 +38,15 @@ def haversine_distances(point: np.array, coordinates: np.array) -> np.array:
 
 
 def get_distance_to_exterior_points(polygon: Polygon, point: Point) -> float:
-    """
-    Get the haversine distance between a point and the closest exterior point of a polygon
+    """Get the haversine distance between a point and the closest exterior point of a polygon.
 
     Args:
         polygon: A shapely Polygon object
         point: A shapely Point object
 
     Returns:
-        The distance in kilometers
+        The distance in kilometers.
+
     """
     polygon_points = np.array(polygon.exterior.coords)
     point_coords = np.array([point.x, point.y])
@@ -53,31 +55,33 @@ def get_distance_to_exterior_points(polygon: Polygon, point: Point) -> float:
 
 
 def get_distance_to_centroid(polygon: Polygon, point: Point) -> float:
-    """
-    Get the haversine distance between a point and the centroid of a polygon
+    """Get the haversine distance between a point and the centroid of a polygon.
 
     Args:
         polygon: A shapely Polygon object
         point: A shapely Point object
 
     Returns:
-        The distance in kilometers
+        The distance in kilometers.
+
     """
     polygon_centroid = np.array(polygon.centroid.xy).reshape(1, -1)[0]
     point = np.array([point.x, point.y])
 
-    distance = haversine_distances(point, polygon_centroid)
-    return distance
+    return haversine_distances(point, polygon_centroid)
 
-async def get_zones(uris: str, hass: HomeAssistant, prioritize) -> pd.DataFrame:
-    """
-    Get the zones from the geojson file.
+
+async def get_zones(uris: str, hass: HomeAssistant, prioritize: bool) -> pd.DataFrame:
+    """Get the zones from the geojson file.
 
     Args:
         uris: The URL to the geojson file.
+        hass: The homeassistant instance.
+        prioritize: boolean if we want to prioritize the zones in order.
 
     Returns:
         A pandas DataFrame containing the zones.
+
     """
     zones = []
 
@@ -89,20 +93,24 @@ async def get_zones(uris: str, hass: HomeAssistant, prioritize) -> pd.DataFrame:
 
         # parse the geojson file into a pandas DataFrame.
         # We only want the relevant information.
-        for i, feature in enumerate(data["features"]):
+        for feature in data["features"]:
             geometry = shape(feature["geometry"])
             properties = feature["properties"]
-            zones.append({"geometry": geometry, "priority": priority ,**properties, })
-
+            zones.append(
+                {
+                    "geometry": geometry,
+                    "priority": priority,
+                    **properties,
+                }
+            )
 
     return pd.DataFrame(zones)
 
 
 def get_locations_zone(
-        lat: float, lon: float, acc: float, zones: pd.DataFrame
-) -> Optional[dict]:
-    """
-    Determine the closest zone to the given GPS coordinates.
+    lat: float, lon: float, acc: float, zones: pd.DataFrame
+) -> dict | None:
+    """Determine the closest zone to the given GPS coordinates.
 
     Args:
         lat: The latitude of the GPS coordinates.
@@ -113,6 +121,7 @@ def get_locations_zone(
 
     Returns:
         The closest zone if found, otherwise `None`.
+
     """
     gps_point = Point(lon, lat)
     buffer = gps_point.buffer(acc / 111320)
@@ -133,10 +142,14 @@ def get_locations_zone(
         }
 
     # filter to the lowest priority zones
-    posible_zones = posible_zones[posible_zones["priority"] == posible_zones["priority"].min()]
+    posible_zones = posible_zones[
+        posible_zones["priority"] == posible_zones["priority"].min()
+    ]
 
     # get the distances to the potential zones using the uclidean distance to the cetnroid
-    distances = posible_zones["geometry"].apply(lambda x: get_distance_to_exterior_points(x, gps_point))
+    distances = posible_zones["geometry"].apply(
+        lambda x: get_distance_to_exterior_points(x, gps_point)
+    )
 
     closest_zone_index = distances.idxmin()
 

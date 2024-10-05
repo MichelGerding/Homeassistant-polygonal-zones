@@ -1,13 +1,24 @@
+"""General helper functions for the polygonal_zones integration."""
+
 import aiohttp
 
 from homeassistant.core import HomeAssistant
 
 
 async def load_data(uri: str, hass: HomeAssistant) -> str:
-    if uri.startswith("http") or uri.startswith("https"):
-        async with aiohttp.ClientSession() as session:
-            async with session.get(uri) as response:
-                return await response.text()
+    """Load the data from either a file or website.
+
+    Args:
+        uri: The link/path to the file to load.
+        hass: The homeassistant instance.
+
+    Returns:
+        the content of the file or an error if it cant be found/reached.
+
+    """
+    if uri.startswith(("http", "https")):
+        async with aiohttp.ClientSession() as session, session.get(uri) as response:
+            return await response.text()
     else:
         config_dir = hass.config.config_dir
         file = await hass.async_add_executor_job(open, f"{config_dir}/{uri}", "r")
@@ -17,8 +28,7 @@ async def load_data(uri: str, hass: HomeAssistant) -> str:
 
 
 def event_should_trigger(event, entity_id) -> bool:
-    """
-    Decide if the event should trigger the sensor.
+    """Decide if the event should trigger the sensor.
 
     Args:
         event: The event to check.
@@ -26,6 +36,7 @@ def event_should_trigger(event, entity_id) -> bool:
 
     Returns:
         True if the event should trigger the sensor, False otherwise.
+
     """
     # check if it is the entity we should listen to.
     if event.data["entity_id"] != entity_id:

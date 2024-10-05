@@ -1,3 +1,5 @@
+"""Constants for polygonal zones integration."""
+
 DOMAIN = "polygonal_zones"
 DATA_ZONES = f"{DOMAIN}_zones"
 DATA_ZONES_URL = f"{DOMAIN}_zones_url"

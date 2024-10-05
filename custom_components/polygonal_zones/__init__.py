@@ -6,7 +6,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 
-from .const import CONF_ZONES_URL, DATA_ZONES, DATA_ZONES_URL, DOMAIN, PLATFORM
+from .const import DOMAIN, PLATFORM
 
 PLATFORMS: list[Platform] = [Platform.DEVICE_TRACKER]
 
