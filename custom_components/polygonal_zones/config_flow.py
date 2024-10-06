@@ -6,9 +6,11 @@ from typing import Any
 
 from voluptuous import Required, Schema
 
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.config_entries import ConfigFlow as EntryConfigFlow
-from homeassistant.config_entries import OptionsFlow
+from homeassistant.config_entries import (
+    ConfigEntry,
+    ConfigFlow as EntryConfigFlow,
+    OptionsFlow,
+)
 from homeassistant.data_entry_flow import FlowResult, callback
 from homeassistant.helpers import selector
 
@@ -35,6 +37,10 @@ def build_create_flow(
             Required(
                 "prioritize_zone_files",
                 default=defaults.get("prioritize_zone_files", False),
+            ): selector.BooleanSelector(selector.BooleanSelectorConfig()),
+            Required(
+                "download_zones",
+                default=defaults.get("download_zones", False),
             ): selector.BooleanSelector(selector.BooleanSelectorConfig()),
             Required(
                 "registered_entities",
@@ -114,7 +120,7 @@ class OptionsFlowHandler(OptionsFlow):
         """Perform the initial step of the options flow, handling user input."""
         errors = {}
 
-        if user_input is not None:
+        if user_input is not None and errors == {}:
             errors = await validate_data(user_input, self.hass.config.config_dir)
             if not errors:
                 self.hass.config_entries.async_update_entry(

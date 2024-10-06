@@ -5,7 +5,7 @@ from urllib.parse import urlparse
 
 import aiohttp
 
-from ..const import CONF_ZONES_URL
+from ..const import CONF_DOWNLOAD_ZONES, CONF_ZONES_URL
 
 
 async def validate_url(url: str) -> bool:
@@ -40,6 +40,9 @@ async def validate_data(user_input, config_dir) -> dict:
 
     """
     errors = {}
+
+    if len(user_input[CONF_ZONES_URL]) == 0 and not user_input[CONF_DOWNLOAD_ZONES]:
+        errors["zone_urls"] = "download_or_no_zones"
 
     # check if the URL is valid
     for uri in user_input[CONF_ZONES_URL]:

@@ -2,3 +2,71 @@ reload_zones:
   target:
     entity:
       integration: 'polygonal_zones'
+
+replace_all_zones:
+  target:
+    entity:
+      integration: 'polygonal_zones'
+
+  fields:
+    zone:
+      name: GeoJSON data
+      description: The GeoJSON representation of the zones
+      required: true
+      selector:
+        text:
+          multiline: true
+
+
+add_zone:
+  target:
+    entity:
+      integration: 'polygonal_zones'
+  fields:
+    zone:
+      name: Zone data
+      description: The GeoJSON representation of the zone
+      required: true
+      selector:
+        text:
+          multiline: true
+
+edit_zone:
+  target:
+    entity:
+      integration: 'polygonal_zones'
+
+  fields:
+    zone_name:
+      name: "Name of the zone"
+      description: "The name of the zone to edit"
+      example: "Shopping mall"
+      required: true
+      selector:
+        text:
+
+    zone:
+      name: Zone data
+      description: The GeoJSON representation of the edited zone
+      required: true
+      selector:
+        text:
+          multiline: true
+
+
+delete_zone:
+  description: "Delete a zone from polygonal_zones"
+  target:
+    entity:
+      integration: polygonal_zones
+
+  fields:
+    zone_name:
+      name: "Name of the zone"
+      description: "The name of the zone to delete"
+      example: "Shopping mall"
+      required: true
+      selector:
+        text: {}
+
+

@@ -71,7 +71,9 @@ def get_distance_to_centroid(polygon: Polygon, point: Point) -> float:
     return haversine_distances(point, polygon_centroid)
 
 
-async def get_zones(uris: str, hass: HomeAssistant, prioritize: bool) -> pd.DataFrame:
+async def get_zones(
+    uris: list[str], hass: HomeAssistant, prioritize: bool
+) -> pd.DataFrame:
     """Get the zones from the geojson file.
 
     Args:
@@ -89,11 +91,14 @@ async def get_zones(uris: str, hass: HomeAssistant, prioritize: bool) -> pd.Data
         data = await load_data(uri, hass)
         data = json.loads(data)
 
-        priority = idx if prioritize else 0
-
         # parse the geojson file into a pandas DataFrame.
         # We only want the relevant information.
         for feature in data["features"]:
+            if "priority" in feature:
+                priority = data["priority"]
+            else:
+                priority = idx if prioritize else 0
+
             geometry = shape(feature["geometry"])
             properties = feature["properties"]
             zones.append(
@@ -123,6 +128,9 @@ def get_locations_zone(
         The closest zone if found, otherwise `None`.
 
     """
+    if len(zones) == 0:
+        return None
+
     gps_point = Point(lon, lat)
     buffer = gps_point.buffer(acc / 111320)
 

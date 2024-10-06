@@ -1,7 +1,8 @@
 """Sensor for the polygonal_zones integration."""
 
-import logging
 from collections.abc import Callable, Coroutine
+import logging
+from pathlib import Path
 from typing import Any
 
 import pandas as pd
@@ -12,17 +13,21 @@ from homeassistant.core import HomeAssistant, ServiceCall, SupportsResponse
 from homeassistant.helpers import entity_platform
 from homeassistant.helpers.entity import generate_entity_id
 
-from .const import (CONF_PRIORITIZE_ZONE_FILES, CONF_REGISTERED_ENTITIES,
-                    CONF_ZONES_URL, DOMAIN)
+from .const import (
+    CONF_DOWNLOAD_ZONES,
+    CONF_PRIORITIZE_ZONE_FILES,
+    CONF_REGISTERED_ENTITIES,
+    CONF_ZONES_URL,
+    DOMAIN,
+)
 from .utils import event_should_trigger, get_locations_zone
+from .utils.local_zones import download_zones
 from .utils.zones import get_zones
 
 _LOGGER = logging.getLogger(__name__)
 
 
-async def custom_async_reload_zones(
-    entity: "PolygonalZoneEntity", call: ServiceCall
-) -> None:
+async def custom_async_reload_zones(entity: "PolygonalZoneEntity", call: ServiceCall):
     """Reload the zones of the entity."""
     await entity.async_reload_zones()
 
@@ -54,6 +59,25 @@ async def async_setup_entry(
         zone_uri for zone_uri in zone_uris if zone_uri is not None and zone_uri != ""
     ]
 
+    editable_file = False
+
+    # if we need to download the zones downlaod them
+    if entry.data.get(CONF_DOWNLOAD_ZONES):
+        download_path = Path(
+            f"{hass.config.config_dir}/polygonal_zones/{entry.entry_id}.json"
+        )
+
+        if not download_path.exists():
+            await download_zones(
+                zone_uris,
+                download_path,
+                entry.data.get(CONF_PRIORITIZE_ZONE_FILES),
+                hass,
+            )
+
+        zone_uris = [f"/polygonal_zones/{entry.entry_id}.json"]
+        editable_file = True
+
     # create the entities
     entities = []
 
@@ -69,6 +93,7 @@ async def async_setup_entry(
             zone_uris,
             base_id,
             entry.data.get(CONF_PRIORITIZE_ZONE_FILES),
+            editable_file,
         )
         entities.append(entity)
 
@@ -102,6 +127,7 @@ class PolygonalZoneEntity(TrackerEntity):
         zone_urls,
         unique_id,
         prioritized_zone_files,
+        editable_file,
     ):
         """Initialize the entity."""
         self._config_entry_id = config_entry_id
@@ -112,6 +138,7 @@ class PolygonalZoneEntity(TrackerEntity):
         self.entity_id = unique_id
         self._attr_unique_id = unique_id
         self._attr_source_type = SourceType.GPS
+        self._editable_file = editable_file
 
     async def async_added_to_hass(self):
         """Run when the entity is added to homeassistant.
@@ -166,6 +193,7 @@ class PolygonalZoneEntity(TrackerEntity):
             "latitude": latitude,
             "longitude": longitude,
             "gps_accuracy": gps_accuracy,
+            "zone_uris": self._zones_urls,
         }
 
     def _handle_state_change_builder(
@@ -206,9 +234,19 @@ class PolygonalZoneEntity(TrackerEntity):
         await self._update_state()
 
     @property
-    def zones(self):
+    def zones(self) -> pd.DataFrame:
         """The loaded zones."""
         return self._zones
+
+    @property
+    def editable_file(self) -> bool:
+        """Is the zone file editable."""
+        return self._editable_file
+
+    @property
+    def zone_urls(self) -> list[str]:
+        """List of the urls where the zones are stored."""
+        return self._zones_urls
 
     @property
     def source_type(self) -> SourceType | str:

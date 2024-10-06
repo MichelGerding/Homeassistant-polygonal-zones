@@ -7,13 +7,43 @@ from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 
 from .const import DOMAIN, PLATFORM
+from .services import (
+    add_new_zone_action_builder,
+    delete_zone_action_builder,
+    edit_zone_action_builder,
+    replace_all_zones_action_builder,
+)
 
 PLATFORMS: list[Platform] = [Platform.DEVICE_TRACKER]
 
 
-async def async_setup(hass: HomeAssistant, config: dict) -> bool:
+async def async_setup(hass: HomeAssistant, _config: dict) -> bool:
     """Set up the polygonal_zones component."""
     hass.data.setdefault(DOMAIN, {})
+
+    hass.services.async_register(
+        DOMAIN,
+        "add_zone",
+        add_new_zone_action_builder(hass),
+    )
+
+    hass.services.async_register(
+        DOMAIN,
+        "delete_zone",
+        delete_zone_action_builder(hass),
+    )
+
+    hass.services.async_register(
+        DOMAIN,
+        "edit_zone",
+        edit_zone_action_builder(hass),
+    )
+
+    hass.services.async_register(
+        DOMAIN,
+        "replace_all_zones",
+        replace_all_zones_action_builder(hass),
+    )
 
     return True
 
