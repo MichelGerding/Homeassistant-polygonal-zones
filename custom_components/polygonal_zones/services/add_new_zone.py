@@ -5,10 +5,13 @@ from pathlib import Path
 
 from homeassistant.core import HomeAssistant, ServiceCall
 
-from custom_components.polygonal_zones.services.errors import ZoneAlreadyExists, ZoneFileNotEditable
+from .errors import (
+    ZoneAlreadyExists,
+    ZoneFileNotEditable,
+)
 from ..utils.general import load_data
 from ..utils.local_zones import save_zones
-from . import get_entities_from_device_id, zone_already_defined
+from .helpers import get_entities_from_device_id, zone_already_defined
 
 
 def add_new_zone_action_builder(hass: HomeAssistant):

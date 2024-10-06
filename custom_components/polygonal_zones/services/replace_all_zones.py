@@ -5,9 +5,9 @@ from pathlib import Path
 
 from homeassistant.core import HomeAssistant, ServiceCall
 
-from custom_components.polygonal_zones.services.errors import ZoneFileNotEditable
+from .errors import ZoneFileNotEditable
 from ..utils.local_zones import save_zones
-from . import get_entities_from_device_id
+from .helpers import get_entities_from_device_id
 
 
 def replace_all_zones_action_builder(hass: HomeAssistant):
