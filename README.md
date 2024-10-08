@@ -113,6 +113,7 @@ The reload_zones action expects the entities to be reloaded as target and return
 - [ ] **Testing**: The current version of the code has no tests. It however has been extensively tested manually. 
                    unit/integration tests might be added at a later date.
 - [ ] **Improve documentation**: The documentation is not yet complete. This might be added at a later date.
+- [ ] **Add translations**: The integration currently only supports english. Translations are needed for other languages.
 
 
 
