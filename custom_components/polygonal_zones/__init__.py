@@ -1,64 +1,80 @@
-"""The Polygonal Zones integration."""
+"""The polygonal_zones integration."""
 
-import json
-import logging
+from __future__ import annotations
 
-import aiohttp
-import pandas as pd
-from shapely.geometry import shape
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import Platform
+from homeassistant.core import HomeAssistant
 
-from .const import (CONF_REGISTERED_ENTITIES, CONF_ZONES_URL, DATA_ZONES,
-                    DATA_ZONES_URL, DOMAIN, PLATFORM)
+from .const import DOMAIN, PLATFORM
+from .services import (
+    add_new_zone_action_builder,
+    delete_zone_action_builder,
+    edit_zone_action_builder,
+    replace_all_zones_action_builder,
+)
 
-_LOGGER = logging.getLogger(__name__)
+PLATFORMS: list[Platform] = [Platform.DEVICE_TRACKER]
 
 
-async def async_setup_entry(hass, entry):
-    """Set up My Integration from a config entry."""
-    # Ensure the entry is not already set up
-    if entry.entry_id in hass.data:
-        return True
-
-    # ensure hass.data[DOMAIN][entry.entry_id] exists
-    zones_url = entry.data.get(CONF_ZONES_URL)
+async def async_setup(hass: HomeAssistant, _config: dict) -> bool:
+    """Set up the polygonal_zones component."""
     hass.data.setdefault(DOMAIN, {})
-    hass.data[DOMAIN][entry.entry_id] = {
-        DATA_ZONES_URL: zones_url,
-        DATA_ZONES: await get_zones(zones_url),
-        'entry': entry
-    }
 
-    await hass.config_entries.async_forward_entry_setups(entry, [PLATFORM])
+    hass.services.async_register(
+        DOMAIN,
+        "add_zone",
+        add_new_zone_action_builder(hass),
+    )
+
+    hass.services.async_register(
+        DOMAIN,
+        "delete_zone",
+        delete_zone_action_builder(hass),
+    )
+
+    hass.services.async_register(
+        DOMAIN,
+        "edit_zone",
+        edit_zone_action_builder(hass),
+    )
+
+    hass.services.async_register(
+        DOMAIN,
+        "replace_all_zones",
+        replace_all_zones_action_builder(hass),
+    )
+
     return True
 
-async def async_unload_entry(hass, entry):
+
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Set up polygonal_zones from a config entry."""
+    if entry.entry_id in hass.data[DOMAIN]:
+        return True
+
+    await hass.config_entries.async_forward_entry_setups(entry, [PLATFORM])
+    entry.async_on_unload(entry.add_update_listener(async_reload_entry))
+    return True
+
+
+async def async_unload_entry(hass: HomeAssistant, entry):
     """Unload a config entry."""
-    unload_ok = True
-
-    # Unload the platforms
-    if not await hass.config_entries.async_forward_entry_unload(entry, PLATFORM):
-        unload_ok = False
-
-    if entry.entry_id in hass.data:
-        del hass.data[DOMAIN][entry.entry_id]
-
+    unload_ok = await hass.config_entries.async_unload_platforms(
+        entry, ["device_tracker"]
+    )
+    if unload_ok:
+        hass.data[DOMAIN].pop(entry.entry_id)
     return unload_ok
 
 
-async def load_data(uri: str) -> str:
-    async with aiohttp.ClientSession() as session:
-        async with session.get(uri) as response:
-            return await response.text()
+async def async_update_options(hass: HomeAssistant, config_entry: ConfigEntry) -> None:
+    """Update options."""
+    await hass.config_entries.async_reload(config_entry.entry_id)
 
 
-async def get_zones(uri: str) -> pd.DataFrame:
-    data = await load_data(uri)
-    data = json.loads(data)
-
-    zones = []
-    for i, feature in enumerate(data["features"]):
-        geometry = shape(feature["geometry"])
-        properties = feature["properties"]
-        zones.append({"geometry": geometry, **properties})
-
-    return pd.DataFrame(zones)
+async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Reload polygonal_zones config entry."""
+    entities = hass.data[DOMAIN][entry.entry_id]
+    for entity in entities:
+        await entity.async_update_config(entry)

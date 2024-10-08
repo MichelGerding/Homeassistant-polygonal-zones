@@ -1,0 +1,56 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Polygonal Zones Configuration",
+        "description": "Select GeoJSON file location",
+        "data": {
+          "zone_urls": "URLs of GeoJSON files",
+          "prioritize_zone_files": "Prioritize order of zone files",
+          "registered_entities": "Entities",
+          "download_zones": "Download the GeoJSON files"
+        },
+        "data_description": {
+          "zone_urls": "Enter the URLs of the GeoJSON files that contain the zones you want to track. this supports both websites and files in the /config directory",
+          "prioritize_zone_files": "If you want to prioritize the order of the zone files, enable this option. this means that if a tracker is in multiple zones it will only consider those with the lowest priority",
+          "download_zones":  "Use a local GeoJSON file to store the zones in. This will load the above defined files into a single file. The entities will only use this single file to retrieve the zones from. if no GeoJSON files are defined we will create a empty GeoJSON file.",
+          "registered_entities": "Select the entities that you want to track in the zones."
+        }
+      }
+    },
+    "error": {
+      "invalid_url": "Invalid URL",
+      "unreachable_url": "One or more urls cannot be reached",
+      "no_entities": "No entities selected",
+      "invalid_path": "The file could not be found",
+      "download_or_no_zones": "Download zones needs to be enabled or links to GeoJSON files need to be defined",
+      "zones_are_downloaded": "The configuration can not be for entities that have downloaded the zone files."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Polygonal Zones Options",
+        "description": "Select GeoJSON file location",
+        "data": {
+          "zone_urls": "URLs of GeoJSON files",
+          "prioritize_zone_files": "Prioritize order of zone files",
+          "zones_are_downloaded": "The configuration can not be for entities that have downloaded the zone files."
+
+        },
+        "data_description": {
+          "zone_urls": "Enter the URLs of the GeoJSON files that contain the zones you want to track. this supports both websites and files in the /config directory",
+          "prioritize_zone_files": "If you want to prioritize the order of the zone files, enable this option. this means that if a tracker is in multiple zones it will only consider those with the lowest priority"
+        }
+      }
+    },
+    "errors": {
+    }
+  },
+  "services": {
+    "reload_zones": {
+      "description": "Reload the zones stored in the GeoJSON files. this will retrieve them form the stored location and update the entities internal cache of the zones. Once complete we will return this to the user",
+      "name": "Reload Zones"
+    }
+  }
+}
