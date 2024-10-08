@@ -30,7 +30,7 @@ The integration will create an entity for each entity you want to track. The sta
 device is currently in. You can use this entity in automations to trigger actions based on the zone the device is in.
 
 The entities name will be generated based on the tracked entity. For example, if you are tracking a device called 
-`device_tracker.my_phone`, the entity will be called `sensor.polygonal_zones_device_tracker_my_phone`. So make sure you 
+`device_tracker.my_phone`, the entity will be called `device_tracker.polygonal_zones_device_tracker_my_phone`. So make sure you 
 don't include entities that have the same name and domain.
 
 ## GeoJSON file
